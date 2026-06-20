@@ -599,62 +599,101 @@
 
   function pollSensors() {
   console.log("Fetching:", espIP + "/data");
-    fetch(espIP + "/data")
-      .then(r => r.json())
-      .then(data => {
-        // Online indicator
-        dot.classList.remove("offline");
-        statusText.textContent = "ONLINE";
 
-        // Temperature
-        const tempEl = document.getElementById("temp");
-        if (data.temperature === null || data.temperature === undefined) {
-          tempEl.textContent = "ERR";
-        } else {
-          tempEl.textContent = data.temperature.toFixed(1) + " °C";
-          tempEl.className   = "card-value";
-        }
+  fetch(espIP + "/data")
+    .then(response => {
+      console.log("Response Status:", response.status);
+      return response.json();
+    })
+    .then(data => {
 
-        // Gas level — flag if above threshold
-        const gasEl = document.getElementById("gas");
-        gasEl.textContent = data.gas;
-        gasEl.className   = data.gas > 3500 ? "card-value warning" : "card-value";
+      console.log("Received:", data);
 
-        // Motion
-        const motionEl = document.getElementById("motion");
-        motionEl.textContent = data.motion ? "DETECTED" : "STILL";
-        motionEl.className   = data.motion ? "card-value detected" : "card-value";
+      // ONLINE
+      dot.classList.remove("offline");
+      statusText.textContent = "ONLINE";
 
-        // Fan status — mirrors Arduino logic exactly
-        const fanEl     = document.getElementById("fanStatus");
-        const fanIcon   = document.getElementById("fanIcon");
-        const fanReason = document.getElementById("fanReason");
+      // TEMPERATURE
+      const tempEl = document.getElementById("temp");
 
-        if (data.gas > 3500) {
-          // Gas emergency — fan ON
-          fanEl.textContent   = "ON";
-          fanEl.className     = "card-value fan-emergency";
-          fanIcon.innerHTML   = "<span class='fan-spinning'>🌀</span>";
-          fanReason.textContent = "GAS EMERGENCY";
-        } else if (data.motion) {
-          // Motion detected — fan ON
-          fanEl.textContent   = "ON";
-          fanEl.className     = "card-value fan-on";
-          fanIcon.innerHTML   = "<span class='fan-spinning'>🌀</span>";
-          fanReason.textContent = "MOTION DETECTED";
-        } else {
-          // No motion — fan OFF
-          fanEl.textContent   = "OFF";
-          fanEl.className     = "card-value fan-off";
-          fanIcon.innerHTML   = "🌀";
-          fanReason.textContent = "STANDBY";
-        }
-      })
-      .catch(() => {
-        dot.classList.add("offline");
-        statusText.textContent = "OFFLINE";
-      });
-  }
+      const temp = Number(data.temperature);
+
+      if (isNaN(temp)) {
+        tempEl.textContent = "ERR";
+      } else {
+        tempEl.textContent = temp.toFixed(1) + " °C";
+        tempEl.className = "card-value";
+      }
+
+      // GAS
+      const gasEl = document.getElementById("gas");
+
+      gasEl.textContent = data.gas;
+
+      gasEl.className =
+        data.gas > 3500
+          ? "card-value warning"
+          : "card-value";
+
+      // MOTION
+      const motionEl = document.getElementById("motion");
+
+      motionEl.textContent =
+        data.motion ? "DETECTED" : "STILL";
+
+      motionEl.className =
+        data.motion
+          ? "card-value detected"
+          : "card-value";
+
+      // FAN STATUS
+      const fanEl = document.getElementById("fanStatus");
+      const fanIcon = document.getElementById("fanIcon");
+      const fanReason = document.getElementById("fanReason");
+
+      if (data.gas > 3500) {
+
+        fanEl.textContent = "ON";
+        fanEl.className = "card-value fan-emergency";
+
+        fanIcon.innerHTML =
+          "<span class='fan-spinning'>🌀</span>";
+
+        fanReason.textContent =
+          "GAS EMERGENCY";
+
+      } else if (data.motion) {
+
+        fanEl.textContent = "ON";
+        fanEl.className = "card-value fan-on";
+
+        fanIcon.innerHTML =
+          "<span class='fan-spinning'>🌀</span>";
+
+        fanReason.textContent =
+          "MOTION DETECTED";
+
+      } else {
+
+        fanEl.textContent = "OFF";
+        fanEl.className = "card-value fan-off";
+
+        fanIcon.innerHTML = "🌀";
+
+        fanReason.textContent =
+          "STANDBY";
+      }
+
+    })
+    .catch(err => {
+
+      console.error("POLL ERROR:", err);
+
+      dot.classList.add("offline");
+      statusText.textContent = "OFFLINE";
+
+    });
+}
 
   setInterval(pollSensors, 1000);
   pollSensors(); // immediate first fetch
