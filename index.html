@@ -587,20 +587,29 @@
 
   // ── Send command ───────────────────────────────────────────────
   function send(route, label) {
-    fetch(espIP + route)
-      .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); })
-      .then(() => showToast(label))
-      .catch(() => showToast("❌ Could not reach ESP32"));
-  }
-
-  // ── Sensor polling ─────────────────────────────────────────────
-  const dot        = document.getElementById("statusDot");
-  const statusText = document.getElementById("statusText");
+  fetch(espIP + route, {
+    headers: {
+      "ngrok-skip-browser-warning": "true"
+    }
+  })
+    .then(r => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+    })
+    .then(() => showToast(label))
+    .catch(err => {
+      console.error(err);
+      showToast("❌ Could not reach ESP32");
+    });
+}
 
   function pollSensors() {
   console.log("Fetching:", espIP + "/data");
 
-  fetch(espIP + "/data")
+  fetch(espIP + "/data", {
+  headers: {
+    "ngrok-skip-browser-warning": "true"
+  }
+})
     .then(response => {
       console.log("Response Status:", response.status);
       return response.json();
