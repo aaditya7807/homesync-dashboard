@@ -617,6 +617,8 @@
     .then(data => {
 
       console.log("Received:", data);
+      const dot = document.getElementById("statusDot");
+const statusText = document.getElementById("statusText");
 
       // ONLINE
       dot.classList.remove("offline");
